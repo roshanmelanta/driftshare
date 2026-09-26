@@ -317,6 +317,26 @@ h1 {
   transform: scale(0.96);
 }
 
+.qr-container {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px;
+  width: fit-content;
+  margin-top: 16px;
+}
+
+.qr-container svg {
+  display: block;
+  width: 160px;
+  height: 160px;
+}
+
+.qr-hint {
+  color: var(--text-lo);
+  font-size: 0.8rem;
+  margin: 8px 0 0;
+}
+
 .drop-zone {
   border: 1.5px dashed var(--panel-border);
   border-radius: 12px;

@@ -67,6 +67,8 @@
             <span id="code-value" class="code-value"></span>
             <button id="btn-copy-code" class="code-copy-btn" type="button">Copy</button>
           </div>
+          <div id="qr-container" class="qr-container"></div>
+          <p class="qr-hint">or let them scan this — it skips typing entirely</p>
         </div>
 
         <div id="drop-zone" class="drop-zone hidden">
@@ -114,6 +116,7 @@
     <p>Built with WebRTC. Files never touch a server.</p>
   </footer>
 
+  <script src="vendor/qrcode.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

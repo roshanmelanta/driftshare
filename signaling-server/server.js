@@ -5,10 +5,27 @@
 // between exactly two browsers who've agreed on the same room code.
 // Once RTCPeerConnection reports "connected", this server is out of
 // the picture entirely.
+//
+// Two additions on top of the original bare version, both in service
+// of resumable transfers:
+//
+// 1. Heartbeat / dead-socket detection. A phone that loses signal
+//    doesn't send a clean TCP close — the socket just goes silent. Without
+//    checking for that, a stale entry can sit in a room forever, and the
+//    real peer trying to reconnect gets told the room is "full" by a
+//    socket that isn't actually there anymore.
+//
+// 2. Role-preserving rejoin. Whoever HAS the file (the sender) needs to
+//    stay the WebRTC offer-creator across a reconnect, or the resume
+//    handshake on the client side breaks. A join message can carry
+//    { preferInitiator: true|false } and the server honors it instead of
+//    always deciding by arrival order.
 
 const { WebSocketServer } = require('ws');
 
 const PORT = process.env.PORT || 8080;
+const HEARTBEAT_INTERVAL_MS = 15000;
+
 const wss = new WebSocketServer({ port: PORT });
 
 // room code -> array of up to 2 sockets
@@ -18,8 +35,26 @@ function log(...args) {
   console.log(new Date().toISOString(), ...args);
 }
 
+function removeFromRoom(socket, room) {
+  const peers = rooms.get(room);
+  if (!peers) return;
+  const remaining = peers.filter((p) => p !== socket);
+
+  if (remaining.length > 0) {
+    remaining[0].send(JSON.stringify({ type: 'peer-left' }));
+  }
+  if (remaining.length === 0) {
+    rooms.delete(room);
+  } else {
+    rooms.set(room, remaining);
+  }
+  log('left', room, 'peers now', remaining.length);
+}
+
 wss.on('connection', (socket) => {
   let joinedRoom = null;
+  socket.isAlive = true;
+  socket.on('pong', () => { socket.isAlive = true; });
 
   socket.on('message', (raw) => {
     let msg;
@@ -44,16 +79,22 @@ wss.on('connection', (socket) => {
       rooms.set(room, peers);
       joinedRoom = room;
 
-      log('joined', room, 'peers now', peers.length);
+      // Default: first to arrive is the initiator (offer-creator). But if
+      // this socket explicitly asked for a role (a reconnect trying to
+      // resume as the peer it was before), honor that instead, as long as
+      // it doesn't collide with a role the other peer already holds.
+      let initiator = peers.length === 1;
+      if (typeof msg.preferInitiator === 'boolean') {
+        const other = peers.find((p) => p !== socket);
+        const otherWantsSame = other && other._preferInitiator === msg.preferInitiator;
+        if (!otherWantsSame) initiator = msg.preferInitiator;
+      }
+      socket._preferInitiator = initiator;
 
-      // Tell this socket whether it's first (will create the offer)
-      // or second (will wait for an offer and create the answer).
-      socket.send(JSON.stringify({
-        type: 'joined',
-        initiator: peers.length === 1,
-      }));
+      log('joined', room, 'peers now', peers.length, 'initiator', initiator);
 
-      // If a second peer just joined, tell the first one someone arrived.
+      socket.send(JSON.stringify({ type: 'joined', initiator }));
+
       if (peers.length === 2) {
         peers[0].send(JSON.stringify({ type: 'peer-joined' }));
       }
@@ -72,21 +113,22 @@ wss.on('connection', (socket) => {
   });
 
   socket.on('close', () => {
-    if (!joinedRoom) return;
-    const peers = rooms.get(joinedRoom) || [];
-    const remaining = peers.filter((p) => p !== socket);
-
-    if (remaining.length > 0) {
-      remaining[0].send(JSON.stringify({ type: 'peer-left' }));
-    }
-
-    if (remaining.length === 0) {
-      rooms.delete(joinedRoom);
-    } else {
-      rooms.set(joinedRoom, remaining);
-    }
-    log('left', joinedRoom, 'peers now', remaining.length);
+    if (joinedRoom) removeFromRoom(socket, joinedRoom);
   });
 });
+
+// Standard `ws` heartbeat pattern: ping everyone every interval; if a
+// socket didn't pong back since the last check, it's presumed dead (the
+// network vanished without a clean close) and gets terminated, which
+// frees its slot in the room for the real peer to reclaim on reconnect.
+const heartbeat = setInterval(() => {
+  wss.clients.forEach((socket) => {
+    if (socket.isAlive === false) return socket.terminate();
+    socket.isAlive = false;
+    socket.ping();
+  });
+}, HEARTBEAT_INTERVAL_MS);
+
+wss.on('close', () => clearInterval(heartbeat));
 
 log(`signaling server listening on ws://localhost:${PORT}`);

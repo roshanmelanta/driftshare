@@ -39,7 +39,34 @@ document.getElementById('btn-send').onclick = () => {
   resetTransferUI();
   document.getElementById('code-display').classList.remove('hidden');
   document.getElementById('code-value').textContent = room;
+  document.getElementById('btn-copy-code').textContent = navigator.share ? 'Share' : 'Copy';
   joinRoom(room);
+};
+
+// Typing a share code on a phone keyboard is annoying, so make sharing
+// it a one-tap action instead: native share sheet when available,
+// clipboard copy as the fallback everywhere else.
+document.getElementById('btn-copy-code').onclick = async (e) => {
+  const room = document.getElementById('code-value').textContent;
+  const btn = e.currentTarget;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ text: `Driftshare code: ${room}` });
+      return;
+    } catch (_) {
+      // user cancelled the share sheet — fall through to clipboard copy
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(room);
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  } catch (_) {
+    // clipboard API unavailable (e.g. non-HTTPS) — code is already on screen to read manually
+  }
 };
 
 document.getElementById('btn-receive').onclick = () => showView('view-enter-code');
@@ -92,7 +119,7 @@ function joinRoom(room) {
         break;
       case 'ice-candidate':
         if (msg.candidate) {
-          try { await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch (_) {}
+          try { await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch (_) { }
         }
         break;
       case 'room-full':

@@ -1,105 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Driftshare — send files, browser to browser</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Driftshare — send files, browser to browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="bg-glow"></div>
+  <div class="bg-glow"></div>
 
-<header class="topbar">
-  <div class="brand"><span class="dot"></span>Driftshare</div>
-  <a href="#how" class="topbar-link">How it works</a>
-</header>
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span>Driftshare</div>
+    <a href="#how" class="topbar-link">How it works</a>
+  </header>
 
-<main>
+  <main>
 
-  <!-- ============ LANDING VIEW ============ -->
-  <section id="view-landing" class="view">
-    <div class="hero">
-      <p class="kicker">Peer to peer, no upload in between</p>
-      <h1>Send a file straight to someone else's browser.</h1>
-      <p class="sub">No account, no storage, nothing kept on a server. Your file leaves your device and lands on theirs over a direct, encrypted connection.</p>
+    <!-- ============ LANDING VIEW ============ -->
+    <section id="view-landing" class="view">
+      <div class="hero">
+        <p class="kicker">Peer to peer, no upload in between</p>
+        <h1>Send a file straight to someone else's browser.</h1>
+        <p class="sub">No account, no storage, nothing kept on a server. Your file leaves your device and lands on
+          theirs over a direct, encrypted connection.</p>
 
-      <div class="cta-row">
-        <button id="btn-send" class="btn btn-primary">Send a file</button>
-        <button id="btn-receive" class="btn btn-ghost">I have a code</button>
+        <div class="cta-row">
+          <button id="btn-send" class="btn btn-primary">Send a file</button>
+          <button id="btn-receive" class="btn btn-ghost">I have a code</button>
+        </div>
       </div>
+    </section>
+
+    <!-- ============ RECEIVE: enter code ============ -->
+    <section id="view-enter-code" class="view hidden">
+      <div class="panel narrow">
+        <button class="back-link" data-back="view-landing">← back</button>
+        <h2>Enter the share code</h2>
+        <p class="sub">Ask the sender for their code, then type it in below.</p>
+        <input id="code-input" class="code-field" placeholder="giant-fern-549" autocomplete="off" autocapitalize="off"
+          autocorrect="off" spellcheck="false" inputmode="text">
+        <button id="btn-submit-code" class="btn btn-primary full">Connect</button>
+      </div>
+    </section>
+
+    <!-- ============ ROOM VIEW (both send + receive land here) ============ -->
+    <section id="view-room" class="view hidden">
+      <div class="panel wide">
+        <button class="back-link" data-back="view-landing">← start over</button>
+
+        <div class="status-row">
+          <span id="status-dot" class="status-dot"></span>
+          <span id="status-text">connecting…</span>
+        </div>
+
+        <div id="code-display" class="code-display hidden">
+          <span class="code-label">share this code</span>
+          <div class="code-value-row">
+            <span id="code-value" class="code-value"></span>
+            <button id="btn-copy-code" class="code-copy-btn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <div id="drop-zone" class="drop-zone hidden">
+          <p class="drop-title">Drop a file here</p>
+          <p class="drop-sub drop-sub-or">or</p>
+          <label class="btn btn-primary">
+            Choose a file
+            <input type="file" id="file-input" hidden>
+          </label>
+        </div>
+
+        <div id="send-progress-wrap" class="progress-block hidden">
+          <div class="progress-label"><span id="send-filename"></span><span id="send-pct">0%</span></div>
+          <div class="progress-track">
+            <div id="send-bar" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <div id="recv-progress-wrap" class="progress-block hidden">
+          <div class="progress-label"><span id="recv-filename"></span><span id="recv-pct">0%</span></div>
+          <div class="progress-track">
+            <div id="recv-bar" class="progress-fill"></div>
+          </div>
+          <a id="recv-download" class="btn btn-primary full hidden">Download file</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <section id="how" class="how">
+    <div class="how-inner">
+      <h3>How it works</h3>
+      <ol class="how-list">
+        <li><strong>The sender opens a connection.</strong> Their browser generates a short share code and waits.</li>
+        <li><strong>The receiver enters the code.</strong> The two browsers use a small relay just to introduce
+          themselves — no file data touches it.</li>
+        <li><strong>The browsers connect directly.</strong> Once linked, the file streams straight from one device to
+          the other, encrypted end to end.</li>
+      </ol>
     </div>
   </section>
 
-  <!-- ============ RECEIVE: enter code ============ -->
-  <section id="view-enter-code" class="view hidden">
-    <div class="panel narrow">
-      <button class="back-link" data-back="view-landing">← back</button>
-      <h2>Enter the share code</h2>
-      <p class="sub">Ask the sender for their code, then type it in below.</p>
-      <input id="code-input" class="code-field" placeholder="giant-fern-549" autocomplete="off">
-      <button id="btn-submit-code" class="btn btn-primary full">Connect</button>
-    </div>
-  </section>
+  <footer class="site-footer">
+    <p>Built with WebRTC. Files never touch a server.</p>
+  </footer>
 
-  <!-- ============ ROOM VIEW (both send + receive land here) ============ -->
-  <section id="view-room" class="view hidden">
-    <div class="panel wide">
-      <button class="back-link" data-back="view-landing">← start over</button>
-
-      <div class="status-row">
-        <span id="status-dot" class="status-dot"></span>
-        <span id="status-text">connecting…</span>
-      </div>
-
-      <div id="code-display" class="code-display hidden">
-        <span class="code-label">share this code</span>
-        <span id="code-value" class="code-value"></span>
-      </div>
-
-      <div id="drop-zone" class="drop-zone hidden">
-        <p class="drop-title">Drop a file here</p>
-        <p class="drop-sub">or</p>
-        <label class="btn btn-ghost">
-          choose a file
-          <input type="file" id="file-input" hidden>
-        </label>
-      </div>
-
-      <div id="send-progress-wrap" class="progress-block hidden">
-        <div class="progress-label"><span id="send-filename"></span><span id="send-pct">0%</span></div>
-        <div class="progress-track"><div id="send-bar" class="progress-fill"></div></div>
-      </div>
-
-      <div id="recv-progress-wrap" class="progress-block hidden">
-        <div class="progress-label"><span id="recv-filename"></span><span id="recv-pct">0%</span></div>
-        <div class="progress-track"><div id="recv-bar" class="progress-fill"></div></div>
-        <a id="recv-download" class="btn btn-primary full hidden">Download file</a>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<section id="how" class="how">
-  <div class="how-inner">
-    <h3>How it works</h3>
-    <ol class="how-list">
-      <li><strong>The sender opens a connection.</strong> Their browser generates a short share code and waits.</li>
-      <li><strong>The receiver enters the code.</strong> The two browsers use a small relay just to introduce themselves — no file data touches it.</li>
-      <li><strong>The browsers connect directly.</strong> Once linked, the file streams straight from one device to the other, encrypted end to end.</li>
-    </ol>
-  </div>
-</section>
-
-<footer class="site-footer">
-  <p>Built with WebRTC. Files never touch a server.</p>
-</footer>
-
-<script src="config.js"></script>
-<script src="app.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
 </body>
+
 </html>

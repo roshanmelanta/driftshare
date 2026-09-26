@@ -1,0 +1,12 @@
+{
+  "name": "fileshare-signaling",
+  "version": "1.0.0",
+  "description": "Minimal WebSocket signaling server for WebRTC P2P file transfer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

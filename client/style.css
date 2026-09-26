@@ -100,7 +100,7 @@ body {
 main {
   max-width: 640px;
   margin: 0 auto;
-  padding: clamp(48px, 10vh, 110px) clamp(20px, 5vw, 0) 40px;
+  padding: clamp(48px, 10vh, 110px) clamp(20px, 5vw, 56px) 40px;
 }
 
 .view.hidden {
@@ -109,7 +109,7 @@ main {
 
 /* ---------- hero ---------- */
 .hero {
-  padding: 0 clamp(20px, 5vw, 0);
+  padding: 0;
 }
 
 .kicker {
@@ -194,7 +194,7 @@ h1 {
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   padding: clamp(24px, 5vw, 36px);
-  margin: 0 clamp(20px, 5vw, 0);
+  margin: 0;
 }
 
 .panel.narrow {
@@ -397,7 +397,7 @@ h1 {
 .how-inner {
   max-width: 640px;
   margin: 0 auto;
-  padding: 48px clamp(20px, 5vw, 0);
+  padding: 48px clamp(20px, 5vw, 56px);
 }
 
 .how h3 {

@@ -97,8 +97,16 @@ wss.on('connection', (socket) => {
 
       socket.send(JSON.stringify({ type: 'joined', initiator }));
 
+      // Tell whichever peer is actually the initiator to create the offer
+      // once both are present — NOT just "whoever arrived first". Those
+      // used to always be the same peer, but preserving roles across a
+      // reconnect can mean the initiator arrives second (e.g. its old
+      // slot is occupied by the other side's not-yet-pruned stale
+      // socket). Notifying position 0 unconditionally left the real
+      // initiator waiting forever with nothing ever prompting it to act.
       if (peers.length === 2) {
-        peers[0].send(JSON.stringify({ type: 'peer-joined' }));
+        const initiatorPeer = peers.find((p) => p._preferInitiator === true) || peers[0];
+        initiatorPeer.send(JSON.stringify({ type: 'peer-joined' }));
       }
       return;
     }

@@ -42,17 +42,6 @@ function renderQrCode(room) {
   document.getElementById('qr-container').innerHTML = qr.createSvgTag({ scalable: true, margin: 2 });
 }
 
-// If this page was opened from a scanned QR code / shared link, skip the
-// "enter code" screen entirely and join straight away.
-(function autoJoinFromLink() {
-  const params = new URLSearchParams(location.search);
-  const code = params.get('code');
-  if (!code) return;
-  showView('view-room');
-  resetTransferUI();
-  joinRoom(code);
-})();
-
 // ---------- entry points ----------
 document.getElementById('btn-send').onclick = () => {
   const room = generateRoomCode();
@@ -179,7 +168,17 @@ function joinRoom(room) {
         }
         break;
       case 'room-full':
-        setStatus('that code is already in use — try a different one', 'failed');
+        // During a normal fresh join this really does mean the code is
+        // taken. But mid-reconnect, it's almost always our own previous
+        // socket still occupying the room because it died silently (e.g.
+        // airplane mode gives no clean close) and the server's heartbeat
+        // hasn't pruned it yet — that clears within a few seconds, so
+        // keep retrying instead of giving up.
+        if (transferInProgress()) {
+          maybeScheduleReconnect();
+        } else {
+          setStatus('that code is already in use — try a different one', 'failed');
+        }
         break;
       case 'peer-left':
         setStatus('the other side disconnected', 'failed');
@@ -384,3 +383,19 @@ function pumpSend() {
     pumpSend();
   });
 }
+
+// ---------- QR / link auto-join ----------
+// Placed here deliberately, at the very end of the file: this calls
+// joinRoom(), which touches the `let`-declared state above (ws, pc,
+// currentRoom, ...). Calling it any earlier — before those declarations
+// have actually executed — hits the temporal dead zone and throws
+// silently, which is why this used to just hang on "connecting…" forever
+// when opened from a scanned QR code.
+(function autoJoinFromLink() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code');
+  if (!code) return;
+  showView('view-room');
+  resetTransferUI();
+  joinRoom(code);
+})();

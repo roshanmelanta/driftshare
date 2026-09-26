@@ -24,7 +24,9 @@
 const { WebSocketServer } = require('ws');
 
 const PORT = process.env.PORT || 8080;
-const HEARTBEAT_INTERVAL_MS = 15000;
+const HEARTBEAT_INTERVAL_MS = 5000; // short on purpose: a socket dropped by
+// something like airplane mode (no clean close) sits in the room and blocks
+// a genuine reconnect with a false "room full" until this interval catches it
 
 const wss = new WebSocketServer({ port: PORT });
 
